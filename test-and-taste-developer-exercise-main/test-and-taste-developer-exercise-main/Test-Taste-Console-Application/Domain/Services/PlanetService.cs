@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text;
@@ -53,11 +54,25 @@ namespace Test_Taste_Console_Application.Domain.Services
                     var newMoonsCollection = new Collection<MoonDto>();
                     foreach (var moon in planet.Moons)
                     {
-                        var moonResponse = _httpClientService.Client
-                            .GetAsync(UriPath.GetMoonByIdQueryParameters + moon.URLId)
-                            .Result;
-                        var moonContent = moonResponse.Content.ReadAsStringAsync().Result;
-                        newMoonsCollection.Add(JsonConvert.DeserializeObject<MoonDto>(moonContent));
+                        try
+                        {
+                            var moonResponse = _httpClientService.Client
+                                .GetAsync(UriPath.GetMoonByIdQueryParameters + moon.URLId)
+                                .Result;
+
+                            if (!moonResponse.IsSuccessStatusCode)
+                            {
+                                Logger.Instance.Warn($"{LoggerMessage.GetRequestFailed}{moonResponse.StatusCode} for moon {moon.URLId}");
+                                continue;
+                            }
+
+                            var moonContent = moonResponse.Content.ReadAsStringAsync().Result;
+                            newMoonsCollection.Add(JsonConvert.DeserializeObject<MoonDto>(moonContent));
+                        }
+                        catch (Exception exception)
+                        {
+                            Logger.Instance.Error($"Failed to load moon {moon.URLId}: {exception.Message}");
+                        }
                     }
                     planet.Moons = newMoonsCollection;
 

@@ -145,44 +145,50 @@ namespace Test_Taste_Console_Application.Domain.Services
 
         public void OutputAllPlanetsAndTheirAverageMoonGravityToConsole()
         {
-            //The function works the same way as the PrintAllPlanetsAndTheirMoonsToConsole function. You can find more comments there.
-            var planets = _planetService.GetAllPlanets().ToArray();
+            // Reuses the existing planet-list operation to show average moon temperature
+            // for planets that have at least one moon. Calculation lives on Planet.
+            Console.WriteLine(OutputString.LoadingData);
+
+            var planets = _planetService.GetAllPlanets()
+                .Where(planet => planet.HasMoons())
+                .ToArray();
+
             if (!planets.Any())
             {
-                Console.WriteLine(OutputString.NoMoonsFound);
+                Console.WriteLine(OutputString.NoPlanetsFound);
                 return;
             }
 
-            var columnSizes = new[] { 20, 30 };
+            Console.WriteLine(OutputString.WritingData);
+
+            var columnSizes = new[] { 20, 45 };
             var columnLabels = new[]
             {
-                OutputString.PlanetId, OutputString.PlanetMoonAverageGravity
+                OutputString.PlanetId, OutputString.PlanetMoonAverageTemperature
             };
-
 
             ConsoleWriter.CreateHeader(columnLabels, columnSizes);
 
-            foreach(Planet planet in planets)
+            foreach (Planet planet in planets)
             {
-                if(planet.HasMoons())
-                {
-                    ConsoleWriter.CreateText(new string[] { $"{planet.Id}", $"{planet.AverageMoonGravity}" }, columnSizes);
-                }
-                else
-                {
-                    ConsoleWriter.CreateText(new string[] { $"{planet.Id}", $"-" }, columnSizes);
-                }
+                ConsoleWriter.CreateText(
+                    new[]
+                    {
+                        CultureInfoUtility.TextInfo.ToTitleCase(planet.Id),
+                        planet.AverageMoonTemperature.ToString("0.00")
+                    },
+                    columnSizes);
             }
 
             ConsoleWriter.CreateLine(columnSizes);
             ConsoleWriter.CreateEmptyLines(2);
-            
+
             /*
-                --------------------+--------------------------------------------------
-                Planet's Number     |Planet's Average Moon Gravity
-                --------------------+--------------------------------------------------
-                1                   |0.0f
-                --------------------+--------------------------------------------------
+                --------------------+---------------------------------------------
+                Planet's Id         |Planet's Average Moon Temperature (K)
+                --------------------+---------------------------------------------
+                Terre               |0.00
+                --------------------+---------------------------------------------
             */
         }
     }
