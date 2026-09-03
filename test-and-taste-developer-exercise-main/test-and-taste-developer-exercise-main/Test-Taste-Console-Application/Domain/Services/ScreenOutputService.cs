@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Test_Taste_Console_Application.Constants;
 using Test_Taste_Console_Application.Domain.Objects;
@@ -22,6 +24,8 @@ namespace Test_Taste_Console_Application.Domain.Services
 
         public void OutputAllPlanetsAndTheirMoonsToConsole()
         {
+            Console.WriteLine(OutputString.LoadingData);
+
             //The service gets all the planets from the API.
             var planets = _planetService.GetAllPlanets().ToArray();
 
@@ -31,6 +35,8 @@ namespace Test_Taste_Console_Application.Domain.Services
                 Console.WriteLine(OutputString.NoPlanetsFound);
                 return;
             }
+
+            Console.WriteLine(OutputString.WritingData);
 
             //The column sizes and labels for the planets are configured here. 
             var columnSizesForPlanets = new[] { 20, 20, 30, 20 };
@@ -102,6 +108,7 @@ namespace Test_Taste_Console_Application.Domain.Services
         public void OutputAllMoonsAndTheirMassToConsole()
         {
             //The function works the same way as the PrintAllPlanetsAndTheirMoonsToConsole function. You can find more comments there.
+            Console.WriteLine(OutputString.LoadingData);
             var moons = _moonService.GetAllMoons().ToArray();
             
             if (!moons.Any())
@@ -109,6 +116,8 @@ namespace Test_Taste_Console_Application.Domain.Services
                 Console.WriteLine(OutputString.NoMoonsFound);
                 return;
             }
+
+            Console.WriteLine(OutputString.WritingData);
 
             var columnSizesForMoons = new[] { 20, 20, 30, 20 };
             var columnLabelsForMoons = new[]
@@ -183,13 +192,45 @@ namespace Test_Taste_Console_Application.Domain.Services
             ConsoleWriter.CreateLine(columnSizes);
             ConsoleWriter.CreateEmptyLines(2);
 
+            WriteAverageMoonTemperatureFile(planets);
+
             /*
                 --------------------+---------------------------------------------
                 Planet's Id         |Planet's Average Moon Temperature (K)
                 --------------------+---------------------------------------------
-                Terre               |0.00
+                Terre               |288.00
                 --------------------+---------------------------------------------
             */
+        }
+
+        /// <summary>
+        /// Writes the same planet/average-moon-temperature list to disk.
+        /// The starter already defined the output folder and CSV name.
+        /// </summary>
+        private static void WriteAverageMoonTemperatureFile(IEnumerable<Planet> planets)
+        {
+            try
+            {
+                Directory.CreateDirectory(PathName.PathToOutputFolder);
+                var filePath = Path.Combine(
+                    PathName.PathToOutputFolder,
+                    PathName.AllPlanetsAndTheirAverageMoonTemperatureFile);
+
+                var lines = new List<string>
+                {
+                    $"{OutputString.PlanetId},{OutputString.PlanetMoonAverageTemperature}"
+                };
+                lines.AddRange(planets.Select(planet =>
+                    $"{CultureInfoUtility.TextInfo.ToTitleCase(planet.Id)},{planet.AverageMoonTemperature.ToString("0.00")}"));
+
+                File.WriteAllLines(filePath, lines);
+                Console.WriteLine($"{OutputString.FileCreated}{filePath}");
+            }
+            catch (Exception exception)
+            {
+                Logger.Instance.Error($"{LoggerMessage.FileOutputOperationFailed}{exception.Message}");
+                Console.WriteLine($"{ExceptionMessage.FileOutputOperationFailed}{exception.Message}");
+            }
         }
     }
 }

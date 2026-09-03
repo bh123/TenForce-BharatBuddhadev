@@ -13,8 +13,16 @@ namespace Test_Taste_Console_Application.Domain.Objects
         public ICollection<Moon> Moons { get; set; }
 
         /// <summary>
+        /// Mean temperature of the planet itself in Kelvin (API field avgTemp).
+        /// Used when every moon has an unknown temperature (API value 0).
+        /// </summary>
+        public float AvgTemp { get; set; }
+
+        /// <summary>
         /// Average temperature of this planet's moons, in Kelvin.
-        /// The API often stores 0 when temperature is unknown, so those moons are skipped.
+        /// The bodies API stores 0 when a moon's temperature is unknown, so those
+        /// moons are skipped. If no moon has a known temperature, the planet's own
+        /// avgTemp is used so the list is not left at the original 0.00 stub.
         /// </summary>
         public float AverageMoonTemperature
         {
@@ -22,13 +30,13 @@ namespace Test_Taste_Console_Application.Domain.Objects
             {
                 if (!HasMoons())
                 {
-                    return 0.0f;
+                    return AvgTemp;
                 }
 
                 var moonsWithKnownTemperature = Moons.Where(moon => moon.AvgTemp > 0).ToList();
                 if (moonsWithKnownTemperature.Count == 0)
                 {
-                    return 0.0f;
+                    return AvgTemp;
                 }
 
                 return moonsWithKnownTemperature.Average(moon => moon.AvgTemp);
@@ -39,6 +47,7 @@ namespace Test_Taste_Console_Application.Domain.Objects
         {
             Id = planetDto.Id;
             SemiMajorAxis = planetDto.SemiMajorAxis;
+            AvgTemp = planetDto.AvgTemp;
             Moons = new Collection<Moon>();
             if(planetDto.Moons != null)
             {

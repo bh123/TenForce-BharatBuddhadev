@@ -54,10 +54,16 @@ namespace Test_Taste_Console_Application.Domain.Services
                     var newMoonsCollection = new Collection<MoonDto>();
                     foreach (var moon in planet.Moons)
                     {
+                        if (string.IsNullOrWhiteSpace(moon.URLId))
+                        {
+                            continue;
+                        }
+
                         try
                         {
                             var moonResponse = _httpClientService.Client
-                                .GetAsync(UriPath.GetMoonByIdQueryParameters + moon.URLId)
+                                .GetAsync(UriPath.GetMoonByIdQueryParameters + moon.URLId +
+                                          UriPath.GetMoonByIdDataQueryParameters)
                                 .Result;
 
                             if (!moonResponse.IsSuccessStatusCode)
